@@ -1,0 +1,31 @@
+# Binaries
+mo
+moonai
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test and coverage outputs
+*.test
+*.out
+coverage.out
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Vendor directory
+vendor/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
