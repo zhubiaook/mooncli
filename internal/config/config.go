@@ -23,7 +23,7 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("get home directory: %w", err)
 	}
 
-	data, err := os.ReadFile(filepath.Join(home, ".claude", "settings.json"))
+	data, err := os.ReadFile(filepath.Join(home, ".mooncli", "settings.json"))
 	if err != nil {
 		return nil, fmt.Errorf("read settings.json: %w", err)
 	}
