@@ -6,6 +6,7 @@ The current commands are:
 
 - `mo ts`: translate between Chinese and English
 - `mo vb`: explain English words or phrases for programmers
+- `mo ck`: check whether an English sentence is correct and idiomatic
 
 ## Features
 
@@ -101,6 +102,21 @@ Start interactive vocabulary mode:
 ./mo vb
 ```
 
+### English Sentence Check
+
+Evaluate an English sentence directly:
+
+```bash
+./mo ck "I very like this feature."
+./mo ck "This sentence sounds natural."
+```
+
+Start interactive sentence-check mode:
+
+```bash
+./mo ck
+```
+
 ## Command Behavior
 
 - If you pass text arguments, the CLI sends them as one prompt and prints the streamed response.
@@ -114,6 +130,7 @@ Run locally:
 ```bash
 go run . ts "你好"
 go run . vb concurrency
+go run . ck "I very like Go."
 ```
 
 Project structure:
@@ -122,8 +139,9 @@ Project structure:
 .
 ├── cmd/
 │   ├── root.go
-│   ├── ts.go
-│   └── vb.go
+│   ├── check.go
+│   ├── translate.go
+│   └── vocabulary.go
 ├── internal/
 │   ├── config/
 │   │   └── config.go
@@ -138,3 +156,4 @@ Project structure:
 - The executable command name is `mo`.
 - The translation command is intentionally restricted to Chinese-English translation only.
 - The vocabulary command is tuned for concise explanations with programmer-friendly examples.
+- The sentence-check command only suggests alternatives when the original sentence is incorrect or unnatural.
