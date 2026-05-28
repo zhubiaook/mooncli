@@ -52,7 +52,7 @@ func init() {
 			return runVocabulary(args, noSpeech, repeat)
 		},
 	}
-	vbCmd.Flags().BoolVar(&noSpeech, "no-speech", false, "skip pronunciation audio")
+	vbCmd.Flags().BoolVarP(&noSpeech, "no-speech", "q", false, "skip pronunciation audio")
 	vbCmd.Flags().IntVarP(&repeat, "repeat", "r", 1, "pronunciation replay count (1-10)")
 	rootCmd.AddCommand(vbCmd)
 }

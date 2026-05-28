@@ -106,6 +106,7 @@ Explain a word or phrase directly:
 ./mo vb hello --repeat 3
 ./mo vb hello -r 3
 ./mo vb resilient --no-speech
+./mo vb resilient -q
 ```
 
 Start interactive vocabulary mode:
@@ -114,9 +115,10 @@ Start interactive vocabulary mode:
 ./mo vb
 ./mo vb -r 3
 ./mo vb --no-speech
+./mo vb -q
 ```
 
-When speech is enabled, `mo vb` pronounces the original lookup text before printing the vocabulary explanation. Use `--repeat` or `-r` to replay the same synthesized pronunciation from 1 to 10 times; the vocabulary explanation is still printed once. If pronunciation configuration, network access, or local playback fails, the command prints one warning and still prints the vocabulary explanation.
+When speech is enabled, `mo vb` pronounces the original lookup text before printing the vocabulary explanation. Use `--repeat` or `-r` to replay the same synthesized pronunciation from 1 to 10 times; the vocabulary explanation is still printed once. Use `-q` or `--no-speech` to skip pronunciation audio. If pronunciation configuration, network access, or local playback fails, the command prints one warning and still prints the vocabulary explanation.
 
 ### English Sentence Check
 
