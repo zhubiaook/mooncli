@@ -22,19 +22,38 @@ func Execute() {
 	}
 }
 
-func runWithPrompt(args []string, systemPrompt string) error {
-	client, err := llm.NewClient(systemPrompt)
-	if err != nil {
-		return err
-	}
+type promptOptions struct {
+	BeforePrompt func(context.Context, string) error
+}
 
+func runWithPrompt(args []string, systemPrompt string) error {
+	return runWithPromptOptions(args, systemPrompt, promptOptions{})
+}
+
+func runWithPromptOptions(args []string, systemPrompt string, opts promptOptions) error {
 	ctx := context.Background()
+	var client *llm.Client
+	stream := func(prompt string) error {
+		if client == nil {
+			var err error
+			client, err = llm.NewClient(systemPrompt)
+			if err != nil {
+				return err
+			}
+		}
+		return client.Stream(ctx, prompt, func(text string) {
+			fmt.Print(text)
+		})
+	}
 
 	if len(args) > 0 {
 		question := strings.Join(args, " ")
-		if err := client.Stream(ctx, question, func(text string) {
-			fmt.Print(text)
-		}); err != nil {
+		if opts.BeforePrompt != nil {
+			if err := opts.BeforePrompt(ctx, question); err != nil {
+				return err
+			}
+		}
+		if err := stream(question); err != nil {
 			return err
 		}
 		fmt.Println()
@@ -54,9 +73,13 @@ func runWithPrompt(args []string, systemPrompt string) error {
 		case "":
 			continue
 		}
-		if err := client.Stream(ctx, input, func(text string) {
-			fmt.Print(text)
-		}); err != nil {
+		if opts.BeforePrompt != nil {
+			if err := opts.BeforePrompt(ctx, input); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				continue
+			}
+		}
+		if err := stream(input); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		}
 		fmt.Println()

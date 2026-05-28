@@ -11,6 +11,15 @@ type Config struct {
 	APIKey  string
 	BaseURL string
 	Model   string
+
+	TTS TTSConfig
+}
+
+type TTSConfig struct {
+	APIKey     string
+	ResourceID string
+	VoiceType  string
+	Endpoint   string
 }
 
 type settingsFile struct {
@@ -37,6 +46,12 @@ func Load() (*Config, error) {
 		APIKey:  sf.Env["ANTHROPIC_AUTH_TOKEN"],
 		BaseURL: sf.Env["ANTHROPIC_BASE_URL"],
 		Model:   sf.Env["ANTHROPIC_MODEL"],
+		TTS: TTSConfig{
+			APIKey:     sf.Env["VOLCENGINE_TTS_API_KEY"],
+			ResourceID: sf.Env["VOLCENGINE_TTS_RESOURCE_ID"],
+			VoiceType:  sf.Env["VOLCENGINE_TTS_VOICE_TYPE"],
+			Endpoint:   sf.Env["VOLCENGINE_TTS_ENDPOINT"],
+		},
 	}
 
 	if cfg.APIKey == "" {
