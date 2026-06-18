@@ -13,7 +13,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "mo",
-	Short: "A CLI tool that uses LLM to answer questions",
+	Short: "A CLI tool for language and speech utilities",
 }
 
 func Execute() {

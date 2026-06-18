@@ -57,11 +57,15 @@ func (c *Client) Speak(ctx context.Context, text string) error {
 }
 
 func (c *Client) SpeakRepeat(ctx context.Context, text string, repeat int) error {
+	return c.SpeakRepeatInterval(ctx, text, repeat, 0)
+}
+
+func (c *Client) SpeakRepeatInterval(ctx context.Context, text string, repeat int, interval time.Duration) error {
 	audio, err := c.Synthesize(ctx, text)
 	if err != nil {
 		return err
 	}
-	return PlayMP3(ctx, audio, repeat)
+	return PlayMP3Interval(ctx, audio, repeat, interval)
 }
 
 func (c *Client) Synthesize(ctx context.Context, text string) ([]byte, error) {
@@ -115,7 +119,11 @@ func (c *Client) Synthesize(ctx context.Context, text string) ([]byte, error) {
 }
 
 func PlayMP3(ctx context.Context, audio []byte, repeat int) error {
-	return playMP3WithPlayer(ctx, audio, repeat, func(path string) error {
+	return PlayMP3Interval(ctx, audio, repeat, 0)
+}
+
+func PlayMP3Interval(ctx context.Context, audio []byte, repeat int, interval time.Duration) error {
+	return playMP3WithPlayerInterval(ctx, audio, repeat, func(path string) error {
 		if _, err := exec.LookPath("afplay"); err != nil {
 			return errors.New("afplay not found")
 		}
@@ -123,12 +131,19 @@ func PlayMP3(ctx context.Context, audio []byte, repeat int) error {
 			return fmt.Errorf("play audio with afplay: %w", err)
 		}
 		return nil
-	})
+	}, interval, time.Sleep)
 }
 
 func playMP3WithPlayer(ctx context.Context, audio []byte, repeat int, play func(string) error) error {
+	return playMP3WithPlayerInterval(ctx, audio, repeat, play, 0, time.Sleep)
+}
+
+func playMP3WithPlayerInterval(ctx context.Context, audio []byte, repeat int, play func(string) error, interval time.Duration, sleep func(time.Duration)) error {
 	if repeat < 1 {
 		return fmt.Errorf("repeat must be at least 1")
+	}
+	if interval < 0 {
+		return fmt.Errorf("interval must be at least 0")
 	}
 
 	file, err := os.CreateTemp("", "mooncli-*.mp3")
@@ -146,12 +161,15 @@ func playMP3WithPlayer(ctx context.Context, audio []byte, repeat int, play func(
 		return fmt.Errorf("close temp audio file: %w", err)
 	}
 
-	for range repeat {
+	for i := range repeat {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 		if err := play(path); err != nil {
 			return err
+		}
+		if i < repeat-1 && interval > 0 {
+			sleep(interval)
 		}
 	}
 	return nil
