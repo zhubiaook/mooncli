@@ -53,7 +53,7 @@ func init() {
 		},
 	}
 	vbCmd.Flags().BoolVarP(&noSpeech, "no-speech", "q", false, "skip pronunciation audio")
-	vbCmd.Flags().IntVarP(&repeat, "repeat", "r", 1, "pronunciation replay count (1-10)")
+	vbCmd.Flags().IntVarP(&repeat, "repeat", "r", 1, "pronunciation replay count (1-100)")
 	rootCmd.AddCommand(vbCmd)
 }
 
@@ -113,8 +113,8 @@ func validateVocabularyOptions(noSpeech bool, repeat int) error {
 }
 
 func validatePronunciationRepeat(repeat int) error {
-	if repeat < 1 || repeat > 10 {
-		return fmt.Errorf("repeat must be between 1 and 10")
+	if repeat < 1 || repeat > 100 {
+		return fmt.Errorf("repeat must be between 1 and 100")
 	}
 	return nil
 }

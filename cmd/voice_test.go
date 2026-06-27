@@ -9,8 +9,8 @@ func TestValidateVoiceOptionsAcceptsRepeatAndInterval(t *testing.T) {
 }
 
 func TestValidateVoiceOptionsRejectsInvalidRepeat(t *testing.T) {
-	if err := validateVoiceOptions(11, 0); err == nil {
-		t.Fatal("validateVoiceOptions(11, 0) returned nil error")
+	if err := validateVoiceOptions(101, 0); err == nil {
+		t.Fatal("validateVoiceOptions(101, 0) returned nil error")
 	}
 }
 

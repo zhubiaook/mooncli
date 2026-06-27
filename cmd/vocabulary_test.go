@@ -2,8 +2,8 @@ package cmd
 
 import "testing"
 
-func TestValidatePronunciationRepeatAcceptsOneToTen(t *testing.T) {
-	for repeat := 1; repeat <= 10; repeat++ {
+func TestValidatePronunciationRepeatAcceptsOneToOneHundred(t *testing.T) {
+	for repeat := 1; repeat <= 100; repeat++ {
 		if err := validatePronunciationRepeat(repeat); err != nil {
 			t.Fatalf("validatePronunciationRepeat(%d) returned error: %v", repeat, err)
 		}
@@ -11,7 +11,7 @@ func TestValidatePronunciationRepeatAcceptsOneToTen(t *testing.T) {
 }
 
 func TestValidatePronunciationRepeatRejectsOutOfRangeValues(t *testing.T) {
-	for _, repeat := range []int{0, -1, 11} {
+	for _, repeat := range []int{0, -1, 101} {
 		if err := validatePronunciationRepeat(repeat); err == nil {
 			t.Fatalf("validatePronunciationRepeat(%d) returned nil error", repeat)
 		}

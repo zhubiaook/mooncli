@@ -25,7 +25,7 @@ func init() {
 			return runVoice(args, repeat, interval)
 		},
 	}
-	voiceCmd.Flags().IntVarP(&repeat, "repeat", "r", 5, "speech replay count (1-10)")
+	voiceCmd.Flags().IntVarP(&repeat, "repeat", "r", 5, "speech replay count (1-100)")
 	voiceCmd.Flags().DurationVarP(&interval, "interval", "i", time.Second, "interval between replays")
 	rootCmd.AddCommand(voiceCmd)
 }
