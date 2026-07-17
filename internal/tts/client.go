@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +25,8 @@ const (
 	defaultEndpoint   = "https://openspeech.bytedance.com/api/v3/tts/unidirectional"
 	audioFormat       = "mp3"
 	audioSampleRateHz = 24000
+	DefaultVolume     = 1.0
+	MaxVolume         = 10.0
 )
 
 type Client struct {
@@ -32,6 +35,14 @@ type Client struct {
 }
 
 func NewClient(cfg config.TTSConfig) (*Client, error) {
+	volume, err := parseVolume(cfg.Volume)
+	if err != nil {
+		return nil, err
+	}
+	return NewClientWithVolume(cfg, volume)
+}
+
+func NewClientWithVolume(cfg config.TTSConfig, volume float64) (*Client, error) {
 	if cfg.APIKey == "" {
 		return nil, errors.New("VOLCENGINE_TTS_API_KEY not set in settings.json")
 	}
@@ -44,6 +55,10 @@ func NewClient(cfg config.TTSConfig) (*Client, error) {
 	if cfg.Endpoint == "" {
 		cfg.Endpoint = defaultEndpoint
 	}
+	if err := ValidateVolume(volume); err != nil {
+		return nil, err
+	}
+	cfg.Volume = strconv.FormatFloat(volume, 'f', -1, 64)
 	return &Client{
 		cfg: cfg,
 		httpClient: &http.Client{
@@ -65,7 +80,7 @@ func (c *Client) SpeakRepeatInterval(ctx context.Context, text string, repeat in
 	if err != nil {
 		return err
 	}
-	return PlayMP3Interval(ctx, audio, repeat, interval)
+	return PlayMP3IntervalVolume(ctx, audio, repeat, interval, c.volume())
 }
 
 func (c *Client) Synthesize(ctx context.Context, text string) ([]byte, error) {
@@ -123,27 +138,34 @@ func PlayMP3(ctx context.Context, audio []byte, repeat int) error {
 }
 
 func PlayMP3Interval(ctx context.Context, audio []byte, repeat int, interval time.Duration) error {
+	return PlayMP3IntervalVolume(ctx, audio, repeat, interval, DefaultVolume)
+}
+
+func PlayMP3IntervalVolume(ctx context.Context, audio []byte, repeat int, interval time.Duration, volume float64) error {
 	return playMP3WithPlayerInterval(ctx, audio, repeat, func(path string) error {
 		if _, err := exec.LookPath("afplay"); err != nil {
 			return errors.New("afplay not found")
 		}
-		if err := exec.CommandContext(ctx, "afplay", path).Run(); err != nil {
+		if err := exec.CommandContext(ctx, "afplay", afplayArgs(path, volume)...).Run(); err != nil {
 			return fmt.Errorf("play audio with afplay: %w", err)
 		}
 		return nil
-	}, interval, time.Sleep)
+	}, interval, volume, time.Sleep)
 }
 
 func playMP3WithPlayer(ctx context.Context, audio []byte, repeat int, play func(string) error) error {
-	return playMP3WithPlayerInterval(ctx, audio, repeat, play, 0, time.Sleep)
+	return playMP3WithPlayerInterval(ctx, audio, repeat, play, 0, DefaultVolume, time.Sleep)
 }
 
-func playMP3WithPlayerInterval(ctx context.Context, audio []byte, repeat int, play func(string) error, interval time.Duration, sleep func(time.Duration)) error {
+func playMP3WithPlayerInterval(ctx context.Context, audio []byte, repeat int, play func(string) error, interval time.Duration, volume float64, sleep func(time.Duration)) error {
 	if repeat < 1 {
 		return fmt.Errorf("repeat must be at least 1")
 	}
 	if interval < 0 {
 		return fmt.Errorf("interval must be at least 0")
+	}
+	if err := ValidateVolume(volume); err != nil {
+		return err
 	}
 
 	file, err := os.CreateTemp("", "mooncli-*.mp3")
@@ -173,6 +195,39 @@ func playMP3WithPlayerInterval(ctx context.Context, audio []byte, repeat int, pl
 		}
 	}
 	return nil
+}
+
+func (c *Client) volume() float64 {
+	volume, err := parseVolume(c.cfg.Volume)
+	if err != nil {
+		return DefaultVolume
+	}
+	return volume
+}
+
+func parseVolume(raw string) (float64, error) {
+	if raw == "" {
+		return DefaultVolume, nil
+	}
+	volume, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		return 0, fmt.Errorf("VOLCENGINE_TTS_VOLUME must be a number between 0 and 10")
+	}
+	if err := ValidateVolume(volume); err != nil {
+		return 0, err
+	}
+	return volume, nil
+}
+
+func ValidateVolume(volume float64) error {
+	if volume < 0 || volume > MaxVolume {
+		return fmt.Errorf("volume must be between 0 and 10")
+	}
+	return nil
+}
+
+func afplayArgs(path string, volume float64) []string {
+	return []string{"-v", strconv.FormatFloat(volume, 'f', -1, 64), path}
 }
 
 func DecodeAudio(raw []byte) ([]byte, error) {

@@ -20,6 +20,7 @@ type TTSConfig struct {
 	ResourceID string
 	VoiceType  string
 	Endpoint   string
+	Volume     string
 }
 
 type settingsFile struct {
@@ -51,6 +52,7 @@ func Load() (*Config, error) {
 			ResourceID: sf.Env["VOLCENGINE_TTS_RESOURCE_ID"],
 			VoiceType:  sf.Env["VOLCENGINE_TTS_VOICE_TYPE"],
 			Endpoint:   sf.Env["VOLCENGINE_TTS_ENDPOINT"],
+			Volume:     sf.Env["VOLCENGINE_TTS_VOLUME"],
 		},
 	}
 

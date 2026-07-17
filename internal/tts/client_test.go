@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"testing"
 	"time"
+
+	"github.com/zhubiaook/moonai/internal/config"
 )
 
 func TestDecodeAudioFromChunkedJSON(t *testing.T) {
@@ -40,6 +42,28 @@ func TestDecodeAudioReportsAPIErrorWithoutAudio(t *testing.T) {
 	}
 }
 
+func TestNewClientRejectsInvalidConfiguredVolume(t *testing.T) {
+	cfg := validTTSConfig()
+	cfg.Volume = "11"
+
+	if _, err := NewClient(cfg); err == nil {
+		t.Fatal("NewClient returned nil error")
+	}
+}
+
+func TestNewClientWithVolumeOverridesConfiguredVolume(t *testing.T) {
+	cfg := validTTSConfig()
+	cfg.Volume = "bad"
+
+	client, err := NewClientWithVolume(cfg, 2)
+	if err != nil {
+		t.Fatalf("NewClientWithVolume returned error: %v", err)
+	}
+	if client.volume() != 2 {
+		t.Fatalf("volume = %v, want 2", client.volume())
+	}
+}
+
 func TestPlayMP3RepeatsAudio(t *testing.T) {
 	calls := 0
 
@@ -62,7 +86,7 @@ func TestPlayMP3WaitsBetweenRepeats(t *testing.T) {
 	err := playMP3WithPlayerInterval(t.Context(), []byte("audio"), 3, func(path string) error {
 		calls++
 		return nil
-	}, time.Second, func(d time.Duration) {
+	}, time.Second, DefaultVolume, func(d time.Duration) {
 		sleeps = append(sleeps, d)
 	})
 	if err != nil {
@@ -88,7 +112,7 @@ func TestPlayMP3AllowsZeroInterval(t *testing.T) {
 	err := playMP3WithPlayerInterval(t.Context(), []byte("audio"), 2, func(path string) error {
 		calls++
 		return nil
-	}, 0, func(time.Duration) {
+	}, 0, DefaultVolume, func(time.Duration) {
 		sleeps++
 	})
 	if err != nil {
@@ -116,10 +140,44 @@ func TestPlayMP3RejectsNegativeInterval(t *testing.T) {
 	err := playMP3WithPlayerInterval(t.Context(), []byte("audio"), 1, func(path string) error {
 		t.Fatal("player should not be called")
 		return nil
-	}, -time.Second, func(time.Duration) {
+	}, -time.Second, DefaultVolume, func(time.Duration) {
 		t.Fatal("sleep should not be called")
 	})
 	if err == nil {
 		t.Fatal("playMP3WithPlayerInterval returned nil error")
+	}
+}
+
+func TestPlayMP3RejectsInvalidVolume(t *testing.T) {
+	err := playMP3WithPlayerInterval(t.Context(), []byte("audio"), 1, func(path string) error {
+		t.Fatal("player should not be called")
+		return nil
+	}, 0, 11, func(time.Duration) {
+		t.Fatal("sleep should not be called")
+	})
+	if err == nil {
+		t.Fatal("playMP3WithPlayerInterval returned nil error")
+	}
+}
+
+func TestAfplayArgsIncludeVolume(t *testing.T) {
+	args := afplayArgs("/tmp/audio.mp3", 2.5)
+	want := []string{"-v", "2.5", "/tmp/audio.mp3"}
+
+	if len(args) != len(want) {
+		t.Fatalf("args = %v, want %v", args, want)
+	}
+	for i := range args {
+		if args[i] != want[i] {
+			t.Fatalf("args = %v, want %v", args, want)
+		}
+	}
+}
+
+func validTTSConfig() config.TTSConfig {
+	return config.TTSConfig{
+		APIKey:     "key",
+		ResourceID: "resource",
+		VoiceType:  "voice",
 	}
 }

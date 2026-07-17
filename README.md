@@ -47,12 +47,13 @@ Expected structure:
     "VOLCENGINE_TTS_API_KEY": "your-volcengine-api-key",
     "VOLCENGINE_TTS_RESOURCE_ID": "seed-tts-2.0",
     "VOLCENGINE_TTS_VOICE_TYPE": "your-voice-type",
+    "VOLCENGINE_TTS_VOLUME": "1.0",
     "VOLCENGINE_TTS_ENDPOINT": "https://openspeech.bytedance.com/api/v3/tts/unidirectional"
   }
 }
 ```
 
-`VOLCENGINE_TTS_ENDPOINT` is optional. If omitted, TTS commands use the Volcengine V3 HTTP unidirectional endpoint. TTS requests synthesize MP3 audio at 24000 Hz and play it with `afplay`.
+`VOLCENGINE_TTS_ENDPOINT` is optional. If omitted, TTS commands use the Volcengine V3 HTTP unidirectional endpoint. `VOLCENGINE_TTS_VOLUME` is optional and defaults to `1.0`; use values above `1.0`, such as `2.0`, to play synthesized speech louder. TTS requests synthesize MP3 audio at 24000 Hz and play it with `afplay`.
 
 ## Installation
 
@@ -108,6 +109,7 @@ Explain a word or phrase directly:
 ./mo vb "technical debt"
 ./mo vb hello --repeat 3
 ./mo vb hello -r 3
+./mo vb hello --volume 2
 ./mo vb resilient --no-speech
 ./mo vb resilient -q
 ```
@@ -117,11 +119,12 @@ Start interactive vocabulary mode:
 ```bash
 ./mo vb
 ./mo vb -r 3
+./mo vb --volume 2
 ./mo vb --no-speech
 ./mo vb -q
 ```
 
-When speech is enabled, `mo vb` pronounces the original lookup text before printing the vocabulary explanation. Use `--repeat` or `-r` to replay the same synthesized pronunciation from 1 to 10 times; the vocabulary explanation is still printed once. Use `-q` or `--no-speech` to skip pronunciation audio. If pronunciation configuration, network access, or local playback fails, the command prints one warning and still prints the vocabulary explanation.
+When speech is enabled, `mo vb` pronounces the original lookup text before printing the vocabulary explanation. Use `--repeat` or `-r` to replay the same synthesized pronunciation from 1 to 100 times; the vocabulary explanation is still printed once. Use `--volume` to override `VOLCENGINE_TTS_VOLUME` for one run. Use `-q` or `--no-speech` to skip pronunciation audio. If pronunciation configuration, network access, or local playback fails, the command prints one warning and still prints the vocabulary explanation.
 
 ### English Sentence Check
 
@@ -147,6 +150,7 @@ Speak text directly:
 ./mo vo "Hello from Moon CLI"
 ./mo vo "Replay this" --repeat 3 --interval 500ms
 ./mo vo "Replay this" -r 3 -i 2s
+./mo vo "Louder playback" --volume 2
 ```
 
 Start interactive text-to-speech mode:
@@ -154,9 +158,10 @@ Start interactive text-to-speech mode:
 ```bash
 ./mo vo
 ./mo vo -r 3 -i 500ms
+./mo vo --volume 2
 ```
 
-`mo voice` synthesizes the input text once, then plays the same audio 5 times by default with a 1 second interval between playbacks. Use `--repeat` or `-r` to set the replay count from 1 to 10. Use `--interval` or `-i` with Go duration syntax, such as `500ms`, `2s`, or `1m`. The interval is only applied between playbacks.
+`mo voice` synthesizes the input text once, then plays the same audio 5 times by default with a 1 second interval between playbacks. Use `--repeat` or `-r` to set the replay count from 1 to 100. Use `--interval` or `-i` with Go duration syntax, such as `500ms`, `2s`, or `1m`. Use `--volume` to override `VOLCENGINE_TTS_VOLUME` for one run. The interval is only applied between playbacks.
 
 ## Command Behavior
 

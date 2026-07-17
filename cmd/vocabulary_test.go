@@ -19,7 +19,13 @@ func TestValidatePronunciationRepeatRejectsOutOfRangeValues(t *testing.T) {
 }
 
 func TestValidateVocabularyOptionsAllowsInvalidRepeatWhenSpeechDisabled(t *testing.T) {
-	if err := validateVocabularyOptions(true, 0); err != nil {
-		t.Fatalf("validateVocabularyOptions(true, 0) returned error: %v", err)
+	if err := validateVocabularyOptions(true, 0, 11, true); err != nil {
+		t.Fatalf("validateVocabularyOptions(true, 0, 11, true) returned error: %v", err)
+	}
+}
+
+func TestValidateVocabularyOptionsRejectsInvalidVolumeOverride(t *testing.T) {
+	if err := validateVocabularyOptions(false, 1, 11, true); err == nil {
+		t.Fatal("validateVocabularyOptions(false, 1, 11, true) returned nil error")
 	}
 }

@@ -44,21 +44,23 @@ STYLE:
 func init() {
 	noSpeech := false
 	repeat := 1
+	volume := tts.DefaultVolume
 	vbCmd := &cobra.Command{
 		Use:   "vb [word or phrase]",
 		Short: "English vocabulary tutor",
 		Long:  "Explain English words and phrases with examples, tips, and related words.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runVocabulary(args, noSpeech, repeat)
+			return runVocabulary(args, noSpeech, repeat, volume, cmd.Flags().Changed("volume"))
 		},
 	}
 	vbCmd.Flags().BoolVarP(&noSpeech, "no-speech", "q", false, "skip pronunciation audio")
 	vbCmd.Flags().IntVarP(&repeat, "repeat", "r", 1, "pronunciation replay count (1-100)")
+	vbCmd.Flags().Float64Var(&volume, "volume", tts.DefaultVolume, "playback volume from 0.0 to 10.0")
 	rootCmd.AddCommand(vbCmd)
 }
 
-func runVocabulary(args []string, noSpeech bool, repeat int) error {
-	if err := validateVocabularyOptions(noSpeech, repeat); err != nil {
+func runVocabulary(args []string, noSpeech bool, repeat int, volume float64, volumeOverride bool) error {
+	if err := validateVocabularyOptions(noSpeech, repeat, volume, volumeOverride); err != nil {
 		return err
 	}
 
@@ -89,7 +91,11 @@ func runVocabulary(args []string, noSpeech bool, repeat int) error {
 					disabled = true
 					return nil
 				}
-				client, err = tts.NewClient(cfg.TTS)
+				if volumeOverride {
+					client, err = tts.NewClientWithVolume(cfg.TTS, volume)
+				} else {
+					client, err = tts.NewClient(cfg.TTS)
+				}
 				if err != nil {
 					warn("%v", err)
 					disabled = true
@@ -105,11 +111,17 @@ func runVocabulary(args []string, noSpeech bool, repeat int) error {
 	})
 }
 
-func validateVocabularyOptions(noSpeech bool, repeat int) error {
+func validateVocabularyOptions(noSpeech bool, repeat int, volume float64, volumeOverride bool) error {
 	if noSpeech {
 		return nil
 	}
-	return validatePronunciationRepeat(repeat)
+	if err := validatePronunciationRepeat(repeat); err != nil {
+		return err
+	}
+	if volumeOverride {
+		return tts.ValidateVolume(volume)
+	}
+	return nil
 }
 
 func validatePronunciationRepeat(repeat int) error {
