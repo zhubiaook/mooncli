@@ -79,35 +79,18 @@ func TestInteractiveModeKeepsHistoryForTheCurrentSession(t *testing.T) {
 	defer terminal.Close()
 	defer func() { _ = command.Process.Kill() }()
 
-	readTerminalUntil(t, terminal, []byte("> "))
-	if _, err := terminal.Write([]byte("hello\r")); err != nil {
-		t.Fatalf("write first history entry: %v", err)
-	}
+	previousOutput := readTerminalUntil(t, terminal, []byte("> "))
+	writeTerminalStep(t, terminal, []byte("hello\r"), previousOutput)
 	readTerminalUntil(t, terminal, []byte("READ:hello"))
-	time.Sleep(100 * time.Millisecond)
-	if _, err := terminal.Write([]byte("\x1b[A")); err != nil {
-		t.Fatalf("recall history entry: %v", err)
-	}
-	time.Sleep(100 * time.Millisecond)
-	if _, err := terminal.Write([]byte("\r")); err != nil {
-		t.Fatalf("submit recalled history entry: %v", err)
-	}
+	writeTerminalStep(t, terminal, []byte("\x1b[A"), previousOutput)
+	writeTerminalStep(t, terminal, []byte("\r"), previousOutput)
 	output := readTerminalUntil(t, terminal, []byte("READ:hello"))
 	if !strings.Contains(string(output), "READ:hello") {
 		t.Fatalf("recalled line was not submitted: %q", output)
 	}
-	time.Sleep(100 * time.Millisecond)
-	if _, err := terminal.Write([]byte("\x1b[A")); err != nil {
-		t.Fatalf("recall history entry before moving down: %v", err)
-	}
-	time.Sleep(100 * time.Millisecond)
-	if _, err := terminal.Write([]byte("\x1b[B")); err != nil {
-		t.Fatalf("move down from recalled history entry: %v", err)
-	}
-	time.Sleep(100 * time.Millisecond)
-	if _, err := terminal.Write([]byte("world\r")); err != nil {
-		t.Fatalf("submit line after moving down: %v", err)
-	}
+	writeTerminalStep(t, terminal, []byte("\x1b[A"), output)
+	writeTerminalStep(t, terminal, []byte("\x1b[B"), output)
+	writeTerminalStep(t, terminal, []byte("world\r"), output)
 	output = readTerminalUntil(t, terminal, []byte("READ:world"))
 	if !strings.Contains(string(output), "READ:world") {
 		t.Fatalf("Down did not restore the current line: %q", output)
