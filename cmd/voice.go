@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -47,18 +46,19 @@ func runVoice(args []string, repeat int, interval time.Duration, volume float64,
 	}
 
 	var client *tts.Client
-	scanner := bufio.NewScanner(os.Stdin)
+	reader, err := newInteractiveReader()
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
 	for {
-		fmt.Print("> ")
-		if !scanner.Scan() {
-			break
+		input, ok, err := readLookupText(reader)
+		if err != nil {
+			return err
 		}
-		input := strings.TrimSpace(scanner.Text())
-		switch input {
-		case "q", "exit", "quit":
+		if !ok {
 			return nil
-		case "":
-			continue
 		}
 		if client == nil {
 			var err error
@@ -72,7 +72,6 @@ func runVoice(args []string, repeat int, interval time.Duration, volume float64,
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		}
 	}
-	return scanner.Err()
 }
 
 func newVoiceClient(volume float64, volumeOverride bool) (*tts.Client, error) {

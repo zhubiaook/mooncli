@@ -8,6 +8,10 @@ Moon CLI is a terminal language utility for Chinese-English translation, vocabul
 The exact word, phrase, or sentence supplied by the user to a command.
 _Avoid_: Query, prompt
 
+**Interactive mode**:
+A running Moon CLI session in which the user can edit and submit multiple pieces of lookup text without restarting the command. All commands in interactive mode provide the same line-editing behavior.
+_Avoid_: REPL, prompt loop
+
 **Vocabulary explanation**:
 The printed teaching response produced for lookup text passed to `mo vb`.
 _Avoid_: Answer, result

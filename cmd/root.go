@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -60,18 +59,19 @@ func runWithPromptOptions(args []string, systemPrompt string, opts promptOptions
 		return nil
 	}
 
-	scanner := bufio.NewScanner(os.Stdin)
+	reader, err := newInteractiveReader()
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
 	for {
-		fmt.Print("> ")
-		if !scanner.Scan() {
-			break
+		input, ok, err := readLookupText(reader)
+		if err != nil {
+			return err
 		}
-		input := strings.TrimSpace(scanner.Text())
-		switch input {
-		case "q", "exit", "quit":
+		if !ok {
 			return nil
-		case "":
-			continue
 		}
 		if opts.BeforePrompt != nil {
 			if err := opts.BeforePrompt(ctx, input); err != nil {
@@ -84,5 +84,4 @@ func runWithPromptOptions(args []string, systemPrompt string, opts promptOptions
 		}
 		fmt.Println()
 	}
-	return scanner.Err()
 }
